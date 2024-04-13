@@ -29,7 +29,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     // let argumentnamegoeshere = args.iter().any(|arg| arg == "flaggoeshere");
     if args.iter().any(|arg| arg == "-h") {
-        println!("speedreader
+        println!("speedreader v0.0.000
         A simple terminal rapid serial visual presentation speed reader
         
         USAGE:
