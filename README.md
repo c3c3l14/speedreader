@@ -1,19 +1,21 @@
-speedreader v0.0.000
+NAME
 
-SUMMARY:
-
-        A Rust based terminal rapid serial visual presentstion (RSVP)
-        speedreading app. Flashes a word or short group of words from
-        a text one at a time in the center of the screen in order to 
-        aid the user in reading text without moving their eyes. 
+        speedreader - Read texts via RSVP
 
 INSTALLATION:
 
         cargo install --git https://github.com/c3c3l14/speedreader/
 
-USAGE:
+SYNOPSIS:
 
-        speedreader [FLAGS] [OPTIONS]
+        speedreader [FLAGS] ...
+
+DESCRIPTION:
+
+        A Rust based terminal rapid serial visual presentstion (RSVP)
+        speedreading app. Flashes a word or short group of words from
+        a text one at a time in the center of the screen in order to 
+        aid the user in reading text without moving their eyes.
             
         FLAGS:
             -h                  Prints help information
