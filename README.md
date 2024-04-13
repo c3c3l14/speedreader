@@ -16,8 +16,7 @@ DESCRIPTION:
         speedreading app. Flashes a word or short group of words from
         a text one at a time in the center of the screen in order to 
         aid the user in reading text without moving their eyes.
-            
-        FLAGS:
+        
             -h                  Prints help information
             -v                  Prints version information
             -f <filename>       Sets file to read (otherwise read from stdin)
@@ -25,7 +24,7 @@ DESCRIPTION:
                                 (default is 1) (incompatible with -c)
 
             -c <number>         Sets number of characters to read at a time 
-                                (default is 12) (incompatible with -w)
+                                (incompatible with -w)
 
             -p <number>         Sets length of pause after punctuation 
                                 (default is 1 word length)
