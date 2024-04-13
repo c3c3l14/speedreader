@@ -1,4 +1,5 @@
 speedreader v0.0.000
+
 SUMMARY:
 
         A Rust based terminal rapid serial visual presentstion (RSVP)
