@@ -1,28 +1,16 @@
-use crossterm::{execute, terminal::{Clear, ClearType}, cursor::MoveTo, style::Print};
+use crossterm::{execute, terminal::{Clear, ClearType}, cursor::MoveTo, style::{Print, SetForegroundColor, Color}};
 use std::env;
 use std::io::BufRead;
 use std::thread;
 use std::time::Duration;
 use atty::Stream;
 
-#[derive(Debug, Copy, Clone)]
-enum Colors {
-    Black,
-    Red,
-    Green,
-    Yellow,
-    Blue,
-    Magenta,
-    Cyan,
-    White,
-}
-
 fn get_center_of_terminal_offset() -> (u16, u16) {
     let (x, y) = crossterm::terminal::size().unwrap();
     ((x / 2), (y / 2))
 }
 
-fn print_at_center(text: &str) {
+fn print_at_center(text: &str, color: Color, highlight: Color) {
     let (x, y) = get_center_of_terminal_offset();
 
     //setup stdout for crossterm
@@ -31,13 +19,33 @@ fn print_at_center(text: &str) {
     //clear the screen
     execute!(stdout, Clear(ClearType::All));
     
-    if text.len() > x as usize {
+
+
+    let text_len = text.len() as u16;
+    
+
+
+
+
+
+
+
+
+    if text_len > x {
         //truncate text if it is too long
         let mut text_clean = text.to_string();
         text_clean.truncate((x*2) as usize);
-        execute!(stdout, MoveTo(x - (text_clean.len() / 2) as u16, y), Print(text_clean));
+        execute!(stdout, MoveTo(x - (text_clean.len() / 2) as u16, y), SetForegroundColor(color), Print(text_clean), SetForegroundColor(Color::Reset));
     } else {
-        execute!(stdout, MoveTo(x - (text.len() / 2) as u16, y), Print(text));
+        let start_x = x - text_len / 2;
+        execute!(stdout, MoveTo(start_x, y), SetForegroundColor(color));
+        for (i, c) in text.chars().enumerate() {
+            if i as u16 == x {
+                execute!(stdout, SetForegroundColor(highlight), Print(c), SetForegroundColor(color));
+            } else {
+                execute!(stdout, Print(c));
+            }
+        }
     }
     
 }
@@ -61,7 +69,7 @@ fn get_word_count(text: &str) -> u32 {
 }
 
 fn main() {
-    let version = "b0.1.042";
+    let version = "b0.1.061";
     let help = "speedreader v0.0.000
     A simple terminal rapid serial visual presentation speed reader
 
@@ -81,12 +89,12 @@ fn main() {
         -p <number>         Sets length of pause after punctuation 
                             (default is 1 word length)
 
-        -color <color>      Sets color of text (default is white) 
+        --color <color>      Sets color of text (default is white) 
                             (only accepts regular terminal colors)
 
-        -highlight <color>  Sets color of center char 
-                            (default if -highlight is not used is same
-                            color as text. default if -highlight is used,
+        --highlight <color>  Sets color of center char 
+                            (default if --highlight is not used is same
+                            color as text. default if --highlight is used,
                             but no color is specified, is red) 
                             (only accepts regular terminal colors)";
     // default values/init vars
@@ -98,16 +106,22 @@ fn main() {
     let mut words: u32 = 1;
     let mut characters: u32 = 12;
     let mut pause: f32 = 1.0;
-    let mut color = Colors::White;
-    let mut highlight = Colors::White;
+    let mut color = Color::White;
+    let mut highlight = Color::White;
     let mut stdin = String::new();
 
     // basic error handling
     // if there is no stdin then print help message
     if atty::is(Stream::Stdin) {
-        println!("{}", help);
+        println!("No input\n{}", help);
         return;
     }
+    // if invalid argument is passed then print help message
+    if env::args().skip(0).any(|arg| {!arg.starts_with("-") && (arg != "-h" || arg != "-v" || arg != "-f" || arg != "-w" || arg != "-c" || arg != "-p" || arg != "--color" || arg != "--highlight")}) {
+        println!("Invalid flag(s) '{}'\n{}", arg, help);
+        return;
+    }
+
     //get stdin as string
     println!("loading text from stdin...");
     while let Ok(n) = std::io::stdin().read_line(&mut stdin) {
@@ -115,14 +129,16 @@ fn main() {
             break;
         }
     }
+
+    // clean up stdin
     stdin = stdin.replace("\n", " ");
     stdin = stdin.replace("\r", " ");
 
 
 
-    // argument parsing, see below for flag usage
+    // argument parsing, see help for flag usage
     let args: Vec<String> = env::args().collect();
-    // let argumentnamegoeshere = args.iter().any(|arg| arg == "flaggoeshere");
+
     if args.iter().any(|arg| arg == "-h") {
         println!("{}", help);
         return;
@@ -132,13 +148,12 @@ fn main() {
         return;
     }
 
-    if args.iter().any(|arg| arg == "-wpm") {
-        let index = args.iter().position(|arg| arg == "-wpm").unwrap();
+    if args.iter().any(|arg| arg == "--wpm") {
+        let index = args.iter().position(|arg| arg == "--wpm").unwrap();
         wpm = args.get(index + 1).unwrap().parse::<u32>().unwrap();
     }
 
     if args.iter().any(|arg| arg == "-f") {
-        println!("Unimplemented sowwy use stdin");
         unimplemented!();
     }
 
@@ -166,18 +181,17 @@ fn main() {
         let index = args.iter().position(|arg| arg == "-p").unwrap();
         pause = args.get(index + 1).unwrap().parse::<f32>().unwrap();
     }
-    if args.iter().any(|arg| arg == "-color") {
-        unimplemented!();
-        let index = args.iter().position(|arg| arg == "-color").unwrap();
-        color = match args.get(index + 1).unwrap().as_str() {
-            "black" => Colors::Black,
-            "red" => Colors::Red,
-            "green" => Colors::Green,
-            "yellow" => Colors::Yellow,
-            "blue" => Colors::Blue,
-            "magenta" => Colors::Magenta,
-            "cyan" => Colors::Cyan,
-            "white" => Colors::White,
+    if args.iter().any(|arg| arg == "--color") {
+        let index = args.iter().position(|arg| arg == "--color").unwrap();
+        color = match args.get(index + 1).unwrap().as_str().to_lowercase().as_str() {
+            "black" => Color::Black,
+            "red" => Color::Red,
+            "green" => Color::Green,
+            "yellow" => Color::Yellow,
+            "blue" => Color::Blue,
+            "magenta" => Color::Magenta,
+            "cyan" => Color::Cyan,
+            "white" => Color::White,
             _ => {
                 println!("Invalid color");
                 return;
@@ -185,24 +199,23 @@ fn main() {
         };
         highlight = color;
     }
-    if args.iter().any(|arg| arg == "-highlight") {
-        unimplemented!();
-        // if -highlight used then set highlight to user specified color
-        // if -highlight used but no following argument starts with - or is invalid then set highlight to red
-        let index = args.iter().position(|arg| arg == "-highlight").unwrap();
+    if args.iter().any(|arg| arg == "--highlight") {
+        // if --highlight used then set highlight to user specified color
+        // if --highlight used but no following argument starts with - or is invalid then set highlight to red
+        let index = args.iter().position(|arg| arg == "--highlight").unwrap();
         
         if args.get(index + 1).is_none() || args.get(index + 1).unwrap().starts_with("-") {
-            highlight = Colors::Red;
+            highlight = Color::Red;
         } else {
             highlight = match args.get(index + 1).unwrap().as_str() {
-                "black" => Colors::Black,
-                "red" => Colors::Red,
-                "green" => Colors::Green,
-                "yellow" => Colors::Yellow,
-                "blue" => Colors::Blue,
-                "magenta" => Colors::Magenta,
-                "cyan" => Colors::Cyan,
-                "white" => Colors::White,
+                "black" => Color::Black,
+                "red" => Color::Red,
+                "green" => Color::Green,
+                "yellow" => Color::Yellow,
+                "blue" => Color::Blue,
+                "magenta" => Color::Magenta,
+                "cyan" => Color::Cyan,
+                "white" => Color::White,
                 _ => {
                     println!("Invalid color");
                     return;
@@ -210,28 +223,6 @@ fn main() {
             };
         }
     }
-
-
-    // flags:
-    // -h: display help message
-    // -v: display version
-    // -wpm <number>: set words per minute
-    // -f <filename>: set file to read (otherwise read from stdin)
-    // -w <number>: set number of words to read at a time (default is 1) (incompatible with -c)
-    // -c <number>: set number of characters to read at a time (default is 12) (incompatible with -w)
-    // -p <number>: set length of pause after punctuation (default is 1 word length)
-    // -color <color>: set color of text (default is white) (only accepts regular terminal colors)
-    // -highlight <color>: set color of center char (default if -highlight is not provided is same color as text. default if -highlight is provided but no color is specified is red) (only accepts regular terminal colors)
-
-    // println!("{}", wpm);
-    // println!("{}", words); 
-    // println!("{}", characters);
-    // println!("{}", pause);
-    // println!("{:?}", color);
-    // println!("{:?}", highlight);
-    let (testx, testy) = get_center_of_terminal_offset();
-    // println!("{}, {}", testx, testy);
-    
 
     //begin actual program loop
     
@@ -241,8 +232,8 @@ fn main() {
     for current_word in 1..=get_word_count(&stdin) {
         let delay = Duration::from_millis((60000 / wpm).into());
         
-        print_at_center(get_word(&stdin, current_word).as_str());
-        if get_word(&stdin, current_word).chars().any(|c| c == '.' || c == '!' || c == '?') {
+        print_at_center(get_word(&stdin, current_word).as_str(), color, highlight);
+        if get_word(&stdin, current_word).chars().any(|c| c == '.' || c == '!' || c == '?' || c == ';' || c == ':') {
             thread::sleep(delay * pause as u32);
         }
 
