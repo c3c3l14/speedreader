@@ -19,21 +19,21 @@ DESCRIPTION:
         
             -h                  Prints help information
             -v                  Prints version information
-            -f <filename>       Sets file to read (otherwise read from stdin)
-            -w <number>         Sets number of words to read at a time 
-                                (default is 1) (incompatible with -c)
+            ~~-f <filename>       Sets file to read (otherwise read from stdin)~~
+            ~~-w <number>         Sets number of words to read at a time 
+                                (default is 1) (incompatible with -c)~~
 
-            -c <number>         Sets number of characters to read at a time 
-                                (incompatible with -w)
+            ~~-c <number>         Sets number of characters to read at a time 
+                                (incompatible with -w)~~
 
             -p <number>         Sets length of pause after punctuation 
                                 (default is 1 word length)
 
-            -color <color>      Sets color of text (default is white) 
-                                (only accepts regular terminal colors)
+            ~~-color <color>      Sets color of text (default is white) 
+                                (only accepts regular terminal colors)~~
 
-            -highlight <color>  Sets color of center char 
+            ~~-highlight <color>  Sets color of center char 
                                 (default if -highlight is not used is same
                                 color as text. default if -highlight is used,
                                 but no color is specified, is red) 
-                                (only accepts regular terminal colors)
+                                (only accepts regular terminal colors)~~
