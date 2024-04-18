@@ -1,8 +1,5 @@
-use crossterm::{execute, terminal::{Clear, ClearType}, cursor::MoveTo, style::{Print, SetForegroundColor, Color}};
-use std::env;
-use std::io::BufRead;
-use std::thread;
-use std::time::Duration;
+use crossterm::{execute, terminal::{Clear, ClearType}, cursor::MoveTo, style::{Print, SetForegroundColor, Color},};
+use std::{env, thread, time::Duration, io::{stdin, stdout, Read, Write}};
 use atty::Stream;
 
 fn get_center_of_terminal_offset() -> (u16, u16) {
@@ -68,9 +65,21 @@ fn get_word_count(text: &str) -> u32 {
     text.split_whitespace().count() as u32
 }
 
+fn user_pause() {
+    let mut stdin = stdin();
+    let mut stdout = stdout();
+    let mut buf = [0; 1];
+    stdout.write_all(b"Press space to continue...").unwrap();
+    stdout.flush().unwrap();
+    stdin.read_exact(&mut buf).unwrap();
+    if buf[0] == 32 {
+        return;
+    }
+}
+
 fn main() {
-    let version = "b0.1.061";
-    let help = "speedreader v0.0.000
+    let version = "b0.1.063";
+    let help = "speedreader vb0.1.063
     A simple terminal rapid serial visual presentation speed reader
 
     USAGE:
@@ -117,10 +126,10 @@ fn main() {
         return;
     }
     // if invalid argument is passed then print help message
-    if env::args().skip(0).any(|arg| {!arg.starts_with("-") && (arg != "-h" || arg != "-v" || arg != "-f" || arg != "-w" || arg != "-c" || arg != "-p" || arg != "--color" || arg != "--highlight")}) {
-        println!("Invalid flag(s) '{}'\n{}", arg, help);
-        return;
-    }
+    // if env::args().skip(0).any(|arg| {!arg.starts_with("-") && (arg != "-h" || arg != "-v" || arg != "-f" || arg != "-w" || arg != "-c" || arg != "-p" || arg != "--color" || arg != "--highlight")}) {
+    //     println!("Invalid flag(s)\n{}", help);
+    //     return;
+    // }
 
     //get stdin as string
     println!("loading text from stdin...");
@@ -230,6 +239,8 @@ fn main() {
     execute!(std::io::stdout(), crossterm::cursor::Hide).unwrap();
 
     for current_word in 1..=get_word_count(&stdin) {
+        //pause if user presses space
+        user_pause();
         let delay = Duration::from_millis((60000 / wpm).into());
         
         print_at_center(get_word(&stdin, current_word).as_str(), color, highlight);
